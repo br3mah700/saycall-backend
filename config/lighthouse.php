@@ -31,6 +31,9 @@ return [
             // Ensures the request is not vulnerable to cross-site request forgery.
             // Nuwave\Lighthouse\Http\Middleware\EnsureXHR::class,
 
+            // Automatically set Content-Type: application/json if omitted by client on POST
+            \App\Http\Middleware\EnsureGraphQLContentType::class,
+
             // Always set the `Accept: application/json` header.
             Nuwave\Lighthouse\Http\Middleware\AcceptJson::class,
 
@@ -61,6 +64,7 @@ return [
     |
     */
 
+    'guards' => null,
     'guards' => ['sanctum'],
 
     /*
