@@ -23,6 +23,16 @@ type Query {
         name: String @where(operator: "like")
     ): [User!]! @paginate(defaultCount: 10)
 
+    # ─── Feed Queries ─────────────────────────────────────────────────────────────────────────────────────
+    "Fetch a cursor-paginated feed of published posts."
+    feed(
+        "Number of items to fetch (max 50)."
+        first: Int = 10
+
+        "Cursor to fetch items after."
+        after: String
+    ): PostConnection! @field(resolver: "App\\GraphQL\\Queries\\Feed")
+
     # ─── Post Queries ────────────────────────────────────────────────
 
     "Find a single post by ID."
@@ -73,6 +83,7 @@ type Mutation {
         body: String!  @rules(apply: ["required", "string"])
         published: Boolean
         user_id: ID!   @rules(apply: ["required", "exists:users,id"])
+        images: [PostImageInput!]
     ): Post @field(resolver: "App\\GraphQL\\Mutations\\CreatePost")
 
     "Update an existing post."
@@ -85,6 +96,25 @@ type Mutation {
 
     "Delete a post by ID."
     deletePost(id: ID!): Post @field(resolver: "App\\GraphQL\\Mutations\\DeletePost")
+}
+
+
+"Relay-style edge containing a post node and its cursor."
+type PostEdge {
+    "Opaque cursor for this edge."
+    cursor: String!
+
+    "The post node."
+    node: Post!
+}
+
+"Relay-style connection for cursor-paginated posts."
+type PostConnection {
+    "List of post edges."
+    edges: [PostEdge!]!
+
+    "Pagination info."
+    pageInfo: PageInfo!
 }
 
 # ─── Types ───────────────────────────────────────────────────────────────────
@@ -145,11 +175,38 @@ type Post {
     "The author of the post."
     user: User! @belongsTo
 
+    "Images attached to the post."
+    images: [PostImage!]! @hasMany
+
     "When the post was created."
     created_at: DateTime!
 
     "When the post was last updated."
     updated_at: DateTime!
+}
+
+"An image attached to a post."
+type PostImage {
+    "Unique primary key."
+    id: ID!
+
+    "Public URL of the image."
+    url: String!
+
+    "Alternative text for accessibility."
+    alt: String
+
+    "When the image was created."
+    created_at: DateTime!
+}
+
+"Input data for creating a post image."
+input PostImageInput {
+    "Public URL of the image (uploaded separately or provided as data URL)."
+    url: String!
+
+    "Alternative text for accessibility."
+    alt: String
 }
 
 "Pagination information (cursor-based)."

@@ -31,6 +31,9 @@ return [
             // Ensures the request is not vulnerable to cross-site request forgery.
             // Nuwave\Lighthouse\Http\Middleware\EnsureXHR::class,
 
+            // Handles CORS preflight and actual request headers.
+            \Illuminate\Http\Middleware\HandleCors::class,
+
             // Automatically set Content-Type: application/json if omitted by client on POST
             \App\Http\Middleware\EnsureGraphQLContentType::class,
 
