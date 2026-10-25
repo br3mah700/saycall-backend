@@ -50,4 +50,12 @@ class Post extends Model
     {
         return $this->hasMany(PostImage::class)->orderByDesc('created_at');
     }
+
+    /**
+     * Get the comments for the post.
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class)->orderByDesc('created_at');
+    }
 }

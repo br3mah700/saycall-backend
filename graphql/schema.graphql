@@ -51,6 +51,22 @@ type Query {
     userPosts(
         user_id: ID! @eq
     ): [Post!]! @paginate(defaultCount: 10)
+
+    # ─── Comment Queries ───────────────────────────────────────────────
+
+    "Fetch cursor-paginated comments for a post."
+    comments(
+        post_id: ID! @eq
+        first: Int = 10
+        after: String
+    ): CommentConnection! @field(resolver: "App\\GraphQL\\Queries\\Comments")
+
+    "Fetch cursor-paginated replies for a comment."
+    replies(
+        comment_id: ID! @eq
+        first: Int = 10
+        after: String
+    ): ReplyConnection! @field(resolver: "App\\GraphQL\\Queries\\Replies")
 }
 
 "Mutations available at the top level."
@@ -96,6 +112,38 @@ type Mutation {
 
     "Delete a post by ID."
     deletePost(id: ID!): Post @field(resolver: "App\\GraphQL\\Mutations\\DeletePost")
+
+    # ─── Comment Mutations ─────────────────────────────────────────────
+
+    "Create a comment on a post."
+    createComment(
+        post_id: ID!   @rules(apply: ["required", "exists:posts,id"])
+        body: String!  @rules(apply: ["required", "string"])
+    ): Comment! @guard @field(resolver: "App\\GraphQL\\Mutations\\CreateComment")
+
+    "Update a comment's body."
+    updateComment(
+        id: ID!
+        body: String! @rules(apply: ["required", "string"])
+    ): Comment! @guard @field(resolver: "App\\GraphQL\\Mutations\\UpdateComment")
+
+    "Delete a comment by ID."
+    deleteComment(id: ID!): Comment! @guard @field(resolver: "App\\GraphQL\\Mutations\\DeleteComment")
+
+    "Create a reply to a comment."
+    createReply(
+        comment_id: ID!   @rules(apply: ["required", "exists:comments,id"])
+        body: String!     @rules(apply: ["required", "string"])
+    ): Reply! @guard @field(resolver: "App\\GraphQL\\Mutations\\CreateReply")
+
+    "Update a reply's body."
+    updateReply(
+        id: ID!
+        body: String! @rules(apply: ["required", "string"])
+    ): Reply! @guard @field(resolver: "App\\GraphQL\\Mutations\\UpdateReply")
+
+    "Delete a reply by ID."
+    deleteReply(id: ID!): Reply! @guard @field(resolver: "App\\GraphQL\\Mutations\\DeleteReply")
 }
 
 
@@ -178,6 +226,9 @@ type Post {
     "Images attached to the post."
     images: [PostImage!]! @hasMany
 
+    "Comments on the post."
+    comments: [Comment!]! @hasMany
+
     "When the post was created."
     created_at: DateTime!
 
@@ -207,6 +258,89 @@ input PostImageInput {
 
     "Alternative text for accessibility."
     alt: String
+}
+
+# ─── Comment Types ─────────────────────────────────────────────────────
+
+"A comment on a post."
+type Comment {
+    "Unique primary key."
+    id: ID!
+
+    "The comment body text."
+    body: String!
+
+    "The post this comment belongs to."
+    post: Post! @belongsTo
+
+    "The user who wrote this comment."
+    user: User! @belongsTo
+
+    "Replies to this comment."
+    replies: [Reply!]! @hasMany
+
+    "When the comment was created."
+    created_at: DateTime!
+
+    "When the comment was last updated."
+    updated_at: DateTime!
+}
+
+"A reply to a comment."
+type Reply {
+    "Unique primary key."
+    id: ID!
+
+    "The reply body text."
+    body: String!
+
+    "The comment this reply belongs to."
+    comment: Comment! @belongsTo
+
+    "The user who wrote this reply."
+    user: User! @belongsTo
+
+    "When the reply was created."
+    created_at: DateTime!
+
+    "When the reply was last updated."
+    updated_at: DateTime!
+}
+
+"Relay-style edge containing a comment node and its cursor."
+type CommentEdge {
+    "Opaque cursor for this edge."
+    cursor: String!
+
+    "The comment node."
+    node: Comment!
+}
+
+"Relay-style connection for cursor-paginated comments."
+type CommentConnection {
+    "List of comment edges."
+    edges: [CommentEdge!]!
+
+    "Pagination info."
+    pageInfo: PageInfo!
+}
+
+"Relay-style edge containing a reply node and its cursor."
+type ReplyEdge {
+    "Opaque cursor for this edge."
+    cursor: String!
+
+    "The reply node."
+    node: Reply!
+}
+
+"Relay-style connection for cursor-paginated replies."
+type ReplyConnection {
+    "List of reply edges."
+    edges: [ReplyEdge!]!
+
+    "Pagination info."
+    pageInfo: PageInfo!
 }
 
 "Pagination information (cursor-based)."
